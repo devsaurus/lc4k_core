@@ -1,0 +1,10 @@
+!ghdl -i ../../../../src/gen/*.vhd ../../../../src/rtl/*.vhd ../rtl/*.vhd ../cpld/*.vhd && ghdl -m clk_source rtl && ghdl -m clk_source_cpld struct
+
+# using clk2fflogic for multiclock design, see https://github.com/YosysHQ/yosys/discussions/3483
+ghdl clk_source; hierarchy -auto-top; flatten; proc; clk2fflogic; opt -mux_bool -mux_undef; rename -top gold; design -stash gold
+ghdl --latches clk_source_cpld; hierarchy -auto-top; flatten; clk2fflogic; opt -mux_bool -mux_undef; rename -top gate; design -stash gate
+
+design -copy-from gold -as gold gold; design -copy-from gate -as gate gate
+
+miter -equiv -flatten -make_assert -make_outputs gold gate miter
+sat -verify -tempinduct -prove trigger 0 -set in_i_res 0 -set-at 1 in_i_res 1 -seq 1 miter

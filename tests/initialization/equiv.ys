@@ -1,0 +1,8 @@
+!ghdl -i ../../../../src/gen/*.vhd ../../../../src/rtl/*.vhd ../rtl/*.vhd ../cpld/*.vhd && ghdl -m initialization rtl && ghdl -m initialization_cpld struct
+
+ghdl initialization; hierarchy -auto-top; flatten; proc; async2sync; opt -mux_bool -mux_undef; rename -top gold; design -stash gold
+ghdl initialization_cpld; hierarchy -auto-top; flatten; async2sync; opt -mux_bool -mux_undef; rename -top gate; design -stash gate
+
+design -copy-from gold -as gold gold; design -copy-from gate -as gate gate
+equiv_make gold gate equiv; hierarchy -top equiv; flatten
+equiv_simple; equiv_struct; equiv_simple; equiv_status -assert

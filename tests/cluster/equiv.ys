@@ -1,0 +1,9 @@
+!ghdl -i ../../../../src/gen/*.vhd ../../../../src/rtl/*.vhd ../rtl/*.vhd ../cpld/*.vhd && ghdl -m cluster rtl && ghdl -m cluster_cpld struct
+
+ghdl cluster; hierarchy -auto-top; rename -top gold; design -stash gold
+
+ghdl cluster_cpld; hierarchy -auto-top; flatten; opt; rename -top gate; design -stash gate
+
+design -copy-from gold -as gold gold; design -copy-from gate -as gate gate
+equiv_make gold gate equiv; hierarchy -top equiv; flatten
+equiv_simple; equiv_struct; equiv_simple; equiv_status -assert

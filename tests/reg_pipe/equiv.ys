@@ -1,0 +1,9 @@
+!ghdl -i ../../../../src/gen/*.vhd ../../../../src/rtl/*.vhd ../rtl/*.vhd ../cpld/*.vhd && ghdl -m reg_pipe rtl && ghdl -m reg_pipe_cpld struct
+
+ghdl reg_pipe; hierarchy -auto-top; proc; async2sync; opt -mux_bool -mux_undef; rename -top gold; design -stash gold
+ghdl reg_pipe_cpld; hierarchy -auto-top; flatten; async2sync; opt -mux_bool -mux_undef; rename -top gate; design -stash gate
+
+design -copy-from gold -as gold gold; design -copy-from gate -as gate gate
+
+miter -equiv -flatten -make_assert -make_outputs gold gate miter
+sat -verify -tempinduct -prove trigger 0 -set in_i_res 0 -set-at 1 in_i_res 1 -seq 1 miter
