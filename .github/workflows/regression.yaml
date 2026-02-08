@@ -2,6 +2,9 @@ name: Run regression
 
 on:
   push:
+    branch: ["main"]
+    tags:
+      - '*'
   pull_request:
     branches: ["main"]
 
@@ -22,7 +25,7 @@ jobs:
       run: |
         pushd src/gen
         make all
-        zip lc4k_core.zip *.vhd
+        zip lc4k_core.zip *.vhd ../rtl/*.vhd
         popd
 
     - uses: YosysHQ/setup-oss-cad-suite@v3
@@ -42,5 +45,29 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: lc4k_core-zip
+        name: lc4k_core
         path: src/gen/lc4k_core.zip
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      id: create_release
+      with:
+        draft: false
+        prerelease: false
+        release_name: ${{ github.ref }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG.md
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: src/gen/lc4k_core.zip
+        asset_name: lc4k_core.zip
+        asset_content_type: application/zip
