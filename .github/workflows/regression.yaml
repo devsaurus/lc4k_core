@@ -1,0 +1,46 @@
+name: Run regression
+
+on:
+  push:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Setup python
+      run: pip3 install -r requirements.txt
+
+    - name: Build models
+      run: |
+        pushd src/gen
+        make all
+        zip lc4k_core.zip *.vhd
+        popd
+
+    - uses: YosysHQ/setup-oss-cad-suite@v3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run tests
+      run: |
+        pushd tests
+        for dir in `find . -mindepth 1 -maxdepth 1 -type d`; do
+          pushd $dir
+          make
+          popd
+        done
+        popd
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: lc4k_core-zip
+        path: src/gen/lc4k_core.zip
