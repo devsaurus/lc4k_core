@@ -25,7 +25,7 @@ jobs:
       run: |
         pushd src/gen
         make all
-        zip lc4k_core.zip *.vhd ../rtl/*.vhd
+        zip lc4k_core.zip *.vhd ../rtl/*.vhd ../../README.md ../../LICENSE
         popd
 
     - uses: YosysHQ/setup-oss-cad-suite@v3
