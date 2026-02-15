@@ -4,7 +4,7 @@ This project aims to provide synthesizable RTL VHDL models for Lattice ispMACH40
 
 ## Overview
 
-Code design generation is based on the reverse engineered fusemap definitions from [re4k](https://github.com/bcrist/re4k/). A python script assembles the core design based on building blocks
+Code design generation is based on the reverse engineered fusemap definitions from [re4k](https://github.com/bcrist/re4k/). A python script assembles the core design from these building blocks:
 
 * Pins
 * Global routing pool (GRP)
@@ -15,7 +15,7 @@ Code design generation is based on the reverse engineered fusemap definitions fr
 
 The result is a VHDL design per device type that accepts the fusemap as generic parameter.
 
-Tests are provided to check equivalence between the original (golden) design and the generated LC4K core parametrized by the fusemap or the golden design.
+Tests are provided to check equivalence between the original (golden) design and the generated LC4K core parametrized by the fusemap.
 
 ## Project setup
 
@@ -93,7 +93,7 @@ There are several approaches for how to integrate the core design and provide th
 
 #### JEDEC conversion
 
-Each core design requires that the generic parameter `g_fusemap` is provided with a `std_logic_vector` of appropriate length. In case of LC4032ZC_TQFP48 the vector contains 17200 bits and corresponds 1:1 to the contents of the JEDEC fusemap.
+Each core design requires that the generic parameter `g_fusemap` is provided with a `std_logic_vector` of appropriate length and corresponds 1:1 to the contents of the JEDEC fusemap. In case of LC4032ZC_TQFP48, the vector contains 17200 bits.
 
 Use `jed2vhdl.py` to convert a JEDEC file to a fusemap parameter:
 
