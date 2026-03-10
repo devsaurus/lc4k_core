@@ -4,7 +4,7 @@ This project aims to provide synthesizable RTL VHDL models for Lattice ispMACH40
 
 ## Overview
 
-Code design generation is based on the reverse engineered fusemap definitions from [re4k](https://github.com/bcrist/re4k/). A python script assembles the core design from these building blocks:
+Core design generation is based on the reverse engineered fusemap definitions from [re4k](https://github.com/bcrist/re4k/). A python script reads [re4k's  S-Expressions](https://github.com/bcrist/re4k/tree/main#s-expression-files) and assembles the toplevel design from parametrizable building blocks:
 
 * Pins
 * Global routing pool (GRP)
@@ -13,7 +13,7 @@ Code design generation is based on the reverse engineered fusemap definitions fr
   * Macrocells
   * Output routing pools (ORP)
 
-The result is a VHDL design per device type that accepts the fusemap as generic parameter.
+The result is a VHDL design hierarchy per device type that accepts the fusemap as generic parameter.
 
 Tests are provided to check equivalence between the original (golden) design and the generated LC4K core parametrized by the fusemap.
 
@@ -93,7 +93,7 @@ There are several approaches for how to integrate the core design and provide th
 
 #### JEDEC conversion
 
-Each core design requires that the generic parameter `g_fusemap` is provided with a `std_logic_vector` of appropriate length and corresponds 1:1 to the contents of the JEDEC fusemap. In case of LC4032ZC_TQFP48, the vector contains 17200 bits.
+Each core design requires that the generic parameter `g_fusemap` is provided with a `std_logic_vector` of appropriate length that corresponds 1:1 to the contents of the JEDEC fusemap. In case of LC4032ZC_TQFP48, the vector contains 17200 bits.
 
 Use `jed2vhdl.py` to convert a JEDEC file to a fusemap parameter:
 
@@ -102,11 +102,11 @@ $ python3 python/jed2vhdl.py <jedec file> <width> [-b] > vector
 ```
 
 * `<width>` specifies how many bits shall be put into a single line of output. Just use the device's column width (172 in the example above), but any number should work
-* `-b` optionally instructs the converter to omit `"&` characters. The result is a file containing only 0 and 1
+* `-b` optionally instructs the converter to omit `"&` characters. The result is a file containing only 1s and 0s
 
 #### By wrapper design
 
-The lc*_core entity is instantiated in a wrapper that narrows down I/Os and sets the generic parameter `g_fusemap`.
+The lc*_core entity is instantiated in a wrapper that narrows down I/Os and sets the generic parameter `g_fusemap`. The value for the generic parameter is the output of `jed2vhdl.py` (without `-b`).
 
 Examples for this approach can be found in the `tests/` folder.
 
