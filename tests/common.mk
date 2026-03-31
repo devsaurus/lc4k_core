@@ -14,7 +14,7 @@ clean: $(addsuffix .clean,$(ARCHS))
 %.do:
 	cd $(SRC_GEN) && make $(@:.do=)
 	@mkdir -p $(@:.do=)/yosys
-	cd $(@:.do=)/yosys && yosys -m ghdl -s ../../equiv.ys | tee log
+	set -o pipefail && cd $(@:.do=)/yosys && yosys -m ghdl -s ../../equiv.ys | tee log
 
 %.clean:
 	rm -rf $(@:.clean=)/yosys
