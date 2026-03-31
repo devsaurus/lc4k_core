@@ -28,7 +28,7 @@ jobs:
         popd
         zip lc4k_core.zip src/gen/*.vhd src/rtl/*.vhd README.md LICENSE
 
-    - uses: YosysHQ/setup-oss-cad-suite@v3
+    - uses: YosysHQ/setup-oss-cad-suite@v4
       # don't run tests for tags
       if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
       with:
