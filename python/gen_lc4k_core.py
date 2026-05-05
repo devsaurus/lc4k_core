@@ -9,8 +9,7 @@ def gen_fuse_vector(sexp):
     outstr = ''
     first = True
     for fuse in sexp.search('fuse'):
-        if first:
-            first = False
+        if first: first = False
         else:
             outstr += ' & '
 
@@ -31,8 +30,7 @@ def gen_fuse_vector_byvalue(sexp):
     outstr = ''
     first = True
     for item in sorted(values, reverse=True):
-        if first:
-            first = False
+        if first: first = False
         else:
             outstr += (' & ')
 
@@ -138,8 +136,7 @@ use ieee.std_logic_1164.all;
 
         first = True
         for pin in self.input_threshold_pins:
-            if first:
-                first = False
+            if first: first = False
             else:
                 print(';')
                 print( '    --')
@@ -213,22 +210,24 @@ use work.lc4k_pack.all;
         print('  signal ', end='')
         first = True
         for glb in self.global_routing_pool_glbs:
-            if first:
-                first = False
+            if first: first = False
             else:
                 print(', ', end='')
+
             print(f'glb{glb[1]}_mcs_to_grp', end='')
+
         print(f' : std_logic_vector(0 to {self.num_mcs-1});')
         print()
 
         print('  signal ', end='')
         first = True
         for glb in self.global_routing_pool_glbs:
-            if first:
-                first = False
+            if first: first = False
             else:
                 print(', ', end='')
+
             print(f'glb{glb[1]}_grp', end='')
+
         print(f' : std_logic_vector(0 to {self.num_gis-1});')
         print()
 
@@ -537,10 +536,10 @@ use work.lc4k_pack.all;
             print( '    constant c_elas_config : elas_t := (')
             first = True
             for idx in range(0, self.num_mcs):
-                if first:
-                    first = False
+                if first: first = False
                 else:
                     print(',')
+
                 print(f"      {idx} => (")
                 print(f"        cluster_routing     => {gen_fuse_vector(index_mc(idx, cluster_routing_mcs))},")
                 print(f"        wide_routing        => {gen_fuse_vector(index_mc(idx, wide_routing_mcs))},")
@@ -567,10 +566,10 @@ use work.lc4k_pack.all;
             print( '    constant c_macrocells_config : macrocells_t := (')
             first = True
             for idx in range(0, self.num_mcs):
-                if first:
-                    first = False
+                if first: first = False
                 else:
                     print(',')
+
                 print(f"      {idx} => (")
                 print(f"        init_state          => {gen_fuse_vector(index_mc(idx, init_state_mcs))},")
                 print(f"        init_source         => {gen_fuse_vector(index_mc(idx, init_source_mcs))},")
@@ -598,20 +597,21 @@ use work.lc4k_pack.all;
                 print(f"        normal => ", end='')
                 first = True
                 for row in range(0, self.num_gis):
-                    if first:
-                        first = False
+                    if first: first = False
                     else:
                         print(' & ', end='')
                     print(f"fm({gi_rows[row]['normal']}, {col})", end='')
+
                 print(',')
                 print(f"        invert => ", end='')
                 first = True
                 for row in range(0, self.num_gis):
-                    if first:
-                        first = False
+                    if first: first = False
                     else:
                         print(' & ', end='')
+
                     print(f"fm({gi_rows[row]['inverted']}, {col})", end='')
+
                 print('')
                 print( "      )", end='')
 
@@ -630,13 +630,14 @@ use work.lc4k_pack.all;
             cols = pterms_glb.search('column')
             first = True
             for ptname in ['shared_pt_clk', 'shared_pt_init', 'shared_pt_enable']:
-                if first:
-                    first = False
+                if first: first = False
                 else:
                     print(',')
+
                 col = cols.search(lambda x: x[0] == 'column' and x[2] == ptname)[0][1]
                 emit_pterm(pt_idx, col)
                 pt_idx += 1
+
             print()
             print("    );")
             print()
@@ -795,18 +796,18 @@ use work.lc4k_pack.all;
             print(f'    glb{glb[1]}_grp <= (')
             gi_first = True
             for gi in glb.search('gi'):
-                if gi_first:
-                    gi_first = False
+                if gi_first: gi_first = False
                 else:
                     print(',')
+
                 print(f'      {gi[1]:>2d} => ', end='')
 
                 fuse_first = True
                 for fuse in gi.search('fuse'):
-                    if fuse_first:
-                        fuse_first = False
+                    if fuse_first: fuse_first = False
                     else:
                         print(' and ', end='')
+
                     print(f'({gen_fuse_vector(fuse):>12s} or ', end='')
                     if fuse.search('fuse/unused'):
                         print("{0:<20s}".format("'1'"),end='')
