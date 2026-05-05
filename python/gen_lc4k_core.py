@@ -238,9 +238,62 @@ use work.lc4k_pack.all;
         print('  signal goe : std_logic_vector(0 to 3);')
         print()
 
+        # OSCTIMER signals
+        if self.is_ze:
+            print( "  signal oscout, timerout, dynoscdis, timerres : std_logic;")
+            print(f"  constant c_use_oscout   : boolean := {gen_fuse_vector(sx.search('osctimer/osc_out'))} = '0';")
+            print(f"  constant c_use_timerout : boolean := {gen_fuse_vector(sx.search('osctimer/timer_out'))} = '0';")
+            print()
+
         #bus_maintenance_extra_fuses = sx.search('bus_maintenance_extra/fuse')
         #print(f'  signal bus_maintenance_extra : std_logic_vector(0 to {len(bus_maintenance_extra_fuses)-1}) := {gen_fuse_vector(bus_maintenance_extra_fuses)};')
         #print()
+
+
+    #
+    # OSC/TIMER block
+    #
+    def emit_osctimer_block(self, sx):
+        print('''
+  ----------------------------------------------------------------------------
+  -- OSC/TIMER
+  --
+  osctimer_block : block
+''')
+
+        print()
+        print( "    constant c_osctimer : osctimer_r := (")
+        print(f"      timer_div => {gen_fuse_vector(sx.search('osctimer/timer_div'))}")
+        print( "    );")
+        print()
+
+        print("  begin")
+        print()
+
+        print("    no_osctimer : if not c_use_oscout and not c_use_timerout generate")
+        print("      oscout   <= '0';")
+        print("      timerout <= '0';")
+        print("    end generate no_osctimer;")
+
+        print("    --")
+
+        print("    inst_osctimer : if c_use_oscout or c_use_timerout generate")
+        print("      osctimer_b : entity work.lc4k_osctimer")
+        print("        generic map (")
+        print("          g_config => c_osctimer")
+        print("        )")
+        print("        port map (")
+        print("          i_oscclk    => i_oscclk,")
+        print("          i_dynoscdis => dynoscdis,")
+        print("          i_timerres  => timerres,")
+        print("          o_oscout    => oscout,")
+        print("          o_timerout  => timerout")
+        print("        );")
+        print("    end generate inst_osctimer;")
+
+        print()
+        print("  end block;")
+        print()
 
 
     #
@@ -440,6 +493,27 @@ use work.lc4k_pack.all;
 ''')
 
             #
+            # Determine ZE type OSC/TIMER configuration
+            #
+            is_ze_osc_glb = False
+            is_ze_tim_glb = False
+            if self.is_ze:
+                if (
+                           ('4032' in sx[0] and glbnum == 0)  # GLB A
+                        or ('4064' in sx[0] and glbnum == 0)  # GLB A
+                        or ('4128' in sx[0] and glbnum == 0)  # GLB A
+                        or ('4256' in sx[0] and glbnum == 2)  # GLB C
+                   ):
+                    is_ze_osc_glb = True
+                elif (
+                           ('4032' in sx[0] and glbnum == 1)  # GLB B
+                        or ('4064' in sx[0] and glbnum == 3)  # GLB D
+                        or ('4128' in sx[0] and glbnum == 6)  # GLB G
+                        or ('4256' in sx[0] and glbnum == 5)  # GLB F
+                   ):
+                    is_ze_tim_glb = True
+
+            #
             # Generate GLB config
             #
             print( '    constant c_glb_config : glb_r := (')
@@ -571,6 +645,11 @@ use work.lc4k_pack.all;
             print('    signal ptoe2orp : std_logic;')
             print()
 
+            # For ZE OSC/TIMER MUX
+            if is_ze_osc_glb or is_ze_tim_glb:
+                print('    signal osctimer : std_logic;')
+                print()
+
             print()
             print('  begin')
             print()
@@ -615,7 +694,26 @@ use work.lc4k_pack.all;
             print( "        o_ptoes => ptoes2orp,")
             print(f"        o_shared_ptoe => glb_shared_ptoes({glbnum})")
             print( "      );")
-            print(f"      glb{glbnum}_mcs_to_grp <= mcs2orp;")
+
+            # Insert ZE OSC/TIMER MUX
+            if is_ze_osc_glb or is_ze_tim_glb:
+                print()
+                print(f"      glb{glbnum}_mcs_to_grp <= (")
+                for idx in range(0, self.num_mcs-1):
+                    print(f"        {idx} => mcs2orp({idx}),")
+                print("        15 => osctimer);")
+                if is_ze_osc_glb:
+                    print( "      osctimer  <= oscout when c_use_oscout else mcs2orp(15);")
+                    print(f"      dynoscdis <= mcs2orp(15) when {gen_fuse_vector(sx.search('osctimer/enable'))} = '0' else '0';")
+                elif is_ze_tim_glb:
+                    print( "      osctimer <= timerout when c_use_timerout else mcs2orp(15);")
+                    print(f"      timerres <= mcs2orp(15) when {gen_fuse_vector(sx.search('osctimer/reset'))} = '0' else '0';")
+                else:
+                    print("      osctimer <= '0';")
+
+            else:
+                print(f"      glb{glbnum}_mcs_to_grp <= mcs2orp;")
+
             print()
 
             #
@@ -739,6 +837,7 @@ use work.lc4k_pack.all;
         print('begin')
         print()
         self.emit_goe_block(sx)
+        if self.is_ze: self.emit_osctimer_block(sx)
         self.emit_io_cell_block(sx)
         self.emit_glb_block(sx)
         self.emit_grp_block(sx)

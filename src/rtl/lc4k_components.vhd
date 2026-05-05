@@ -715,7 +715,7 @@ entity lc4k_osctimer is
     g_config : osctimer_r
   );
   port (
-    i_oscclk2x  : in  std_logic;
+    i_oscclk    : in  std_logic;
     i_dynoscdis : in  std_logic;
     i_timerres  : in  std_logic;
     o_oscout    : out std_logic;
@@ -725,8 +725,8 @@ end;
 
 architecture rtl of lc4k_osctimer is
 
-  signal oscclk : std_logic := '0';
-  signal timer : unsigned(19 downto 0);
+  signal timer    : unsigned(19 downto 0);
+  signal timerout : std_logic;
 
   constant c_reload : unsigned(timer'range) :=
     ( 6 => g_config.timer_div(0) nand g_config.timer_div(1),
@@ -736,38 +736,24 @@ architecture rtl of lc4k_osctimer is
 
 begin
 
-  oscclk_p : process (i_oscclk2x)
+  o_oscout <= i_oscclk;
+
+  timer_p : process (i_dynoscdis, i_timerres, i_oscclk)
   begin
-    if rising_edge(i_oscclk2x) then
-      if i_dynoscdis = '1' then
-        oscclk <= '0';
+    if i_dynoscdis = '1' or i_timerres = '1' then
+      timer    <= c_reload-1;
+      timerout <= '0';
+
+    elsif rising_edge(i_oscclk) then
+      if timer > 0 then
+        timer <= timer - 1;
       else
-        oscclk <= not oscclk;
+        timer    <= c_reload-1;
+        timerout <= not timerout;
       end if;
     end if;
   end process;
   --
-  o_oscout <= oscclk;
-
-  timer_p : process (i_oscclk2x)
-  begin
-    if rising_edge(i_oscclk2x) then
-      if i_dynoscdis = '1' or i_timerres = '1' then
-        timer <= c_reload;
-
-      elsif oscclk = '0' then
-        if timer > 0 then
-          timer <= timer - 1;
-        else
-          timer <= c_reload;
-        end if;
-      end if;
-    end if;
-  end process;
-  --
-  with g_config.timer_div select o_timerout <=
-    timer( 9) when "01",
-    timer(19) when "10",
-    timer( 6) when others;
+  o_timerout <= timerout;
 
 end;
